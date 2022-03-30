@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
+import pywt
 
 try:
     from wfun import get_default_wavelet, WAVLIST, fastcwt
@@ -112,7 +113,7 @@ def cws(time, signal=None, scales=None, wavelet=None,
          cbarkw=None,
          xlim=None, ylim=None, yscale=None,
          xlabel=None, ylabel=None, title=None,
-         figsize=None, ax=None):
+         figsize=None, ax=None, cwt_fun='fastcwt'):
 
     if isinstance(time, CWT):
         c = time
@@ -134,8 +135,17 @@ def cws(time, signal=None, scales=None, wavelet=None,
             wavelet = get_default_wavelet()
 
         # wavelet transform
-        dt = time[1]-time[0]
-        coefs, scales_freq = CWT_FUN(signal, scales, wavelet, dt)
+        if cwt_fun == "fastcwt":
+            cwt_fun = CWT_FUN
+
+        elif cwt_fun == "pywt":
+            cwt_fun = pywt.cwt
+
+        else:
+            raise ValueError("Specify either 'fastcwt' or 'pywt' for continuous wavelet transform computation.")
+
+        dt = np.median(np.ediff1d(time)) # time[1]-time[0]
+        coefs, scales_freq = cwt_fun(signal, scales, wavelet, sampling_period=dt)
 
     # create plot area or use the one provided
     if ax is None:
@@ -270,7 +280,7 @@ def cws(time, signal=None, scales=None, wavelet=None,
         if cbarlabel:
             colorbar.set_label(cbarlabel)
 
-    return ax
+    return ax, qmesh, values
 
 
 cws.__doc__ = """
