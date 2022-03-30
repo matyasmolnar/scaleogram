@@ -113,7 +113,8 @@ def cws(time, signal=None, scales=None, wavelet=None,
          cbarkw=None,
          xlim=None, ylim=None, yscale=None,
          xlabel=None, ylabel=None, title=None,
-         figsize=None, ax=None, cwt_fun='fastcwt'):
+         figsize=None, ax=None, cwt_fun='fastcwt',
+         vlims=None):
 
     if isinstance(time, CWT):
         c = time
@@ -220,7 +221,10 @@ def cws(time, signal=None, scales=None, wavelet=None,
 
     if cscale == 'log':
         isvalid = (values > 0)
-        cnorm = LogNorm(values[isvalid].min(), values[isvalid].max())
+        if vlims is None:
+            cnorm = LogNorm(values[isvalid].min(), values[isvalid].max())
+        else:
+            cnorm = LogNorm(vlims[0], vlims[1])
     elif cscale == 'linear':
         cnorm = None
     else:
@@ -269,7 +273,7 @@ def cws(time, signal=None, scales=None, wavelet=None,
         ymask[-mid:] = ymhalf[0:mid][::-1]
 
         # plot the mask and forward user parameters
-        plt.plot(xmesh, ymask)
+        ax.plot(xmesh, ymask)
         coikw = COI_DEFAULTS if coikw is None else coikw
         ax.fill_between(xmesh, yborder, ymask, **coikw )
 
@@ -444,5 +448,3 @@ Returns
 Continuous Wavelet list
 -----------------------
 - """+("\n- ".join(WAVLIST))
-
-
