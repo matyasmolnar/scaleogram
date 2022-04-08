@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 import pywt
+import scipy
 
 try:
     from wfun import get_default_wavelet, WAVLIST, fastcwt
@@ -105,16 +106,16 @@ class CWT:
 
 
 def cws(time, signal=None, scales=None, wavelet=None,
-         periods=None,
-         spectrum='amp', coi=True, coikw=None,
-         yaxis='period',
-         cscale='linear', cmap='jet', clim=None,
-         cbar='vertical', cbarlabel=None,
-         cbarkw=None,
-         xlim=None, ylim=None, yscale=None,
-         xlabel=None, ylabel=None, title=None,
-         figsize=None, ax=None, cwt_fun='fastcwt',
-         vlims=None):
+        periods=None,
+        spectrum='amp', coi=True, coikw=None,
+        yaxis='period',
+        cscale='linear', cmap='jet', clim=None,
+        cbar='vertical', cbarlabel=None,
+        cbarkw=None,
+        xlim=None, ylim=None, yscale=None,
+        xlabel=None, ylabel=None, title=None,
+        figsize=None, ax=None, cwt_fun='fastcwt',
+        vlims=None):
 
     if isinstance(time, CWT):
         c = time
@@ -242,35 +243,45 @@ def cws(time, signal=None, scales=None, wavelet=None,
     # (locations subject to invalid coefficients near the borders of data)
     if coi:
         # convert the wavelet scales frequency into time domain periodicity
-        scales_coi = scales_period
+
+        # here extend the scale range for which the CoI is computed, for better plotting
+        nscales = np.append(scales, np.arange(scales[-1], scales[-1]+5)[1:])
+        nscales_freq = pywt.scale2frequency(wavelet, nscales)/dt
+        nscales_period = 1./nscales_freq
+
+        scales_coi = nscales_period
         max_coi  = scales_coi[-1]
 
         # produce the line and the curve delimiting the COI masked area
         mid = int(len(xmesh)/2)
-        time0 = np.abs(xmesh[0:mid+1]-xmesh[0])
-        ymask = np.zeros(len(xmesh), dtype=np.float16)
-        ymhalf= ymask[0:mid+1]  # compute the left part of the mask
-        ws    = np.argsort(scales_period) # ensure np.interp() works
+        time0 = np.abs(xmesh[:mid+1]-xmesh[0])
+        ymask = np.zeros(len(xmesh))
+        ymhalf = ymask[:mid+1]  # compute the left part of the mask
+        ws = np.argsort(scales_coi) # ensure np.interp() works
         minscale, maxscale = sorted(ax.get_ylim())
+
+        # * sqrt(2) as in Torrence and Compo with CoI = sqrt(2) * scale
         if yaxis == 'period':
-            ymhalf[:] = np.interp(time0,
-                  scales_period[ws], scales_coi[ws])
+            ymhalf[:] = np.interp(time0, scales_coi[ws]*2**0.5, scales_coi[ws])
             yborder = np.zeros(len(xmesh)) + maxscale
-            ymhalf[time0 > max_coi]   = maxscale
+            ymhalf[time0 > max_coi*2**0.5] = np.nan
         elif yaxis == 'frequency':
-            ymhalf[:] = np.interp(time0,
-                  scales_period[ws], 1./scales_coi[ws])
+
+            f1 = scipy.interpolate.interp1d(scales_coi[ws]*2**0.5 , 1./scales_coi[ws], \
+                                            kind='cubic', fill_value='extrapolate')
+            # ymhalf[:] = np.interp(time0, scales_coi[ws], 1./scales_coi[ws])
+            ymhalf[:] = f1(time0)
             yborder = np.zeros(len(xmesh)) + minscale
-            ymhalf[time0 > max_coi]   = minscale
+            ymhalf[time0 > max_coi*2**0.5] = np.nan
         elif yaxis == 'scale':
-            ymhalf[:] = np.interp(time0, scales_coi, scales)
+            ymhalf[:] = np.interp(time0, scales_coi*2**0.5, nscales)
             yborder = np.zeros(len(xmesh)) + maxscale
-            ymhalf[time0 > max_coi]   = maxscale
+            ymhalf[time0 > max_coi*2**0.5] = np.nan
         else:
             raise ValueError("yaxis="+str(yaxis))
 
         # complete the right part of the mask by symmetry
-        ymask[-mid:] = ymhalf[0:mid][::-1]
+        ymask[-mid:] = ymhalf[:mid][::-1]
 
         # plot the mask and forward user parameters
         ax.plot(xmesh, ymask)
