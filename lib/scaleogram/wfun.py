@@ -258,9 +258,9 @@ def plot_wav_time(wav=None, real=True, imag=True,
 
     # tme domain plot
     if real:
-        ax.plot(time, fun_wav.real, label=r"$\mathfrak{Re}$")#, label="real")
+        ax.plot(time, fun_wav.real, label=r'$\mathfrak{Re}$', alpha=0.8)
     if imag:
-        ax.plot(time, fun_wav.imag, "r-", label=r"$\mathfrak{Re}$")#, label="imag")
+        ax.plot(time, fun_wav.imag, "r-", label=r'$\mathfrak{Im}$', alpha=0.8)
     if legend:
         ax.legend()
     ax.set_title(wav.name)
@@ -312,11 +312,11 @@ def plot_wav_freq(wav=None, figsize=None, ax=None, yscale='linear',
     ax.plot(central_frequency*np.ones(2), ax.get_ylim())
 
     if annotate:
-        ax.annotate("central_freq=%0.1fHz\nbandwidth_param=%0.1f" % (
+        ax.annotate("central freq = %0.1f Hz\nbandwidth param = %0.1f" % (
                     central_frequency, bandwidth_frequency),
                     xy=(central_frequency, 0.5),
                     xytext=(central_frequency+2, 0.6),
-                    arrowprops=dict(facecolor='black', shrink=0.01))
+                    arrowprops=dict(facecolor='black', shrink=0.005))
 
     return ax
 
