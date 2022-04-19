@@ -139,9 +139,9 @@ def fastcwt(data, scales, wavelet, sampling_period=1.0, method='auto'):
     Parameters
     ----------
     signal : array to compute the CWT on
-    
+
     scales: dilatation factors for the CWT
-    
+
     wavelet: wavelet name or pywt.ContinuousWavelet
 
     method=['auto'] | 'conv' | 'fft' for selecting the convolution method
@@ -149,7 +149,7 @@ def fastcwt(data, scales, wavelet, sampling_period=1.0, method='auto'):
         scales. While the `'fft'` and `'conv'` uses `numpy.fft` and `numpy.conv`
         respectively.
 
-    In practice the `'fft'` method is implemented by using the convolution 
+    In practice the `'fft'` method is implemented by using the convolution
     theorem which states::
         convolve(wav,sig) == ifft(fft(wav)*fft(sig))
 
@@ -180,13 +180,13 @@ def fastcwt(data, scales, wavelet, sampling_period=1.0, method='auto'):
         out = np.zeros((np.size(scales), data.size), dtype=dt_out)
         precision = 10
         int_psi, x = pywt.integrate_wavelet(wavelet, precision=precision)
-        
+
         if method in ('auto', 'fft'):
             # - to be as large as the sum of data length and and maximum wavelet
             #   support to avoid circular convolution effects
             # - additional padding to reach a power of 2 for CPU-optimal FFT
             size_pad = lambda s: 2**np.int(np.ceil(np.log2(s[0] + s[1])))
-            size_scale0 = size_pad( (len(data), 
+            size_scale0 = size_pad( (len(data),
                                      np.take(scales, 0) * ((x[-1] - x[0]) + 1)) )
             fft_data = None
         elif not method == 'conv':
@@ -199,7 +199,7 @@ def fastcwt(data, scales, wavelet, sampling_period=1.0, method='auto'):
             if np.max(j) >= np.size(int_psi):
                 j = np.delete(j, np.where((j >= np.size(int_psi)))[0])
             int_psi_scale = int_psi[j.astype(np.int)][::-1]
-               
+
             if method == 'conv':
                 conv = np.convolve(data, int_psi_scale)
             else:
@@ -219,7 +219,7 @@ def fastcwt(data, scales, wavelet, sampling_period=1.0, method='auto'):
                     conv = conv[0:len(data)+len(int_psi_scale)-1]
                 else:
                     conv = np.convolve(data, int_psi_scale)
-                
+
             coef = - np.sqrt(scales[i]) * np.diff(conv)
             if not np.iscomplexobj(out):
                 coef = np.real(coef)
@@ -258,9 +258,9 @@ def plot_wav_time(wav=None, real=True, imag=True,
 
     # tme domain plot
     if real:
-        ax.plot(time, fun_wav.real, label="real")
+        ax.plot(time, fun_wav.real, label=r"$\mathfrak{Re}$")#, label="real")
     if imag:
-        ax.plot(time, fun_wav.imag, "r-", label="imag")
+        ax.plot(time, fun_wav.imag, "r-", label=r"$\mathfrak{Re}$")#, label="imag")
     if legend:
         ax.legend()
     ax.set_title(wav.name)
@@ -404,5 +404,3 @@ def plot_wavelets(wavlist=None, figsize=None):
 #    plot_wavelets()
 #    plt.draw()
 #    plt.show()
-
-
